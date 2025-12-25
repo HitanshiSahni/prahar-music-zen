@@ -99,7 +99,7 @@ The system ensures **musical correctness first**, using AI only for creative son
 ---
 
 ## Project Structure
-
+```bash
 prahar-music-zen/
 │
 ├── frontend/
@@ -119,7 +119,7 @@ prahar-music-zen/
 │
 ├── backend-api-contract.md
 └── README.md
-
+```
 
 ---
 
@@ -212,32 +212,32 @@ Temporary endpoint to verify Gen-AI output independently.
 ### Architecture Overview
 
 Frontend captures:
--Current IST time
--User mood (optional)
--Genre & language preferences
+- Current IST time
+- User mood (optional)
+- Genre & language preferences
 
 Backend:
--Computes Prahar from timestamp
--Maps mood → rasa
--Selects raaga using rule-based logic
+- Computes Prahar from timestamp
+- Maps mood → rasa
+- Selects raaga using rule-based logic
 
 Gen-AI:
--Receives raaga, genre, language
--Returns Spotify-playable songs
+- Receives raaga, genre, language
+- Returns Spotify-playable songs
 
 Frontend:
--Displays raaga, prahar, and recommended songs
+- Displays raaga, prahar, and recommended songs
 
 ---
 
 #### Design Decisions
 
--Raaga selection is rule-based, not AI-generated
--Gen-AI is used only for song discovery
--No medical, healing, or therapeutic claims
--Strict JSON output for reliability
--Lightweight, fast, and explainable system
--Product-first architecture
+- Raaga selection is rule-based, not AI-generated
+- Gen-AI is used only for song discovery
+- No medical, healing, or therapeutic claims
+- Strict JSON output for reliability
+- Lightweight, fast, and explainable system
+- Product-first architecture
 ---
 
 ### Security & Git Hygiene
@@ -245,24 +245,24 @@ Frontend:
 Sensitive files are ignored using .gitignore.
 
 Never commit:
--.env
--API keys
--Cache or build artifacts
+- .env
+- API keys
+- Cache or build artifacts
 ---
 
 ### Future Enhancements
 
--Spotify Playback SDK integration
--Playlist generation
--User authentication (Clerk)
--Listening history
+- Spotify Playback SDK integration
+- Playlist generation
+- User authentication (Clerk)
+- Listening history
 
 Personalized analytics
 ---
 ### Contribution
 
--Pull requests and issues are welcome.
--Please keep changes modular and well-documented.
+- Pull requests and issues are welcome.
+- Please keep changes modular and well-documented.
 ---
 ### License
 
