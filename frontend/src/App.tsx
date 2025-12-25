@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
+
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import PlayerPage from "./pages/PlayerPage";
@@ -19,19 +20,21 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/dashboard" element={<Dashboard />}>
-            <Route path="mood" element={<MoodBoardPage />} />
-            <Route path="player" element={<PlayerPage />} />
-            <Route path="timeline" element={<TimelinePage />} />
-            <Route path="analytics" element={<AnalyticsPage />} />
-            <Route path="settings" element={<SettingsPage />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+
+      {/* ROUTES ONLY — NO BrowserRouter HERE */}
+      <Routes>
+        <Route path="/" element={<Login />} />
+
+        <Route path="/dashboard" element={<Dashboard />}>
+          <Route path="mood" element={<MoodBoardPage />} />
+          <Route path="player" element={<PlayerPage />} />
+          <Route path="timeline" element={<TimelinePage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+        </Route>
+
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </TooltipProvider>
   </QueryClientProvider>
 );

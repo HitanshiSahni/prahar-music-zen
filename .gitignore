@@ -1,24 +1,48 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# ======================
+# ENV & SECRETS
+# ======================
+.env
+.env.*
+backend/.env
 
-node_modules
-dist
-dist-ssr
+# ======================
+# PYTHON
+# ======================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+backend/**/__pycache__/
+
+# ======================
+# NODE / FRONTEND
+# ======================
+node_modules/
+dist/
+dist-ssr/
 *.local
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# ======================
+# LOCK FILES (keep ONE)
+# ======================
+pnpm-lock.yaml
+
+# ======================
+# EDITOR / OS
+# ======================
+.vscode/
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+
+# ======================
+# LOGS
+# ======================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
