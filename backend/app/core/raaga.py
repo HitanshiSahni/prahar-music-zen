@@ -1,8 +1,6 @@
 from app.data.raaga_catalog import RAAGA_CATALOG
 
 
-from app.data.raaga_catalog import RAAGA_CATALOG
-
 def select_raaga(prahar: str, rasa: str | None):
     """
     Deterministic raaga selection using Prahar + optional Rasa

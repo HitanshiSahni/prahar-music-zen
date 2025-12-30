@@ -4,7 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import albumArt from "@/assets/album-art.png";
 
-const RaagaPlayer = () => {
+type Props = {
+  raaga: string;
+};
+
+const RaagaPlayer = ({ raaga }: Props) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [progress, setProgress] = useState(35);

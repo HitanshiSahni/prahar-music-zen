@@ -1,17 +1,23 @@
 export interface RecommendRequest {
+  timestamp: string;
   mood: string;
   genre: string;
   language: string;
-  timestamp: string;
 }
 
 export interface RecommendResponse {
-  rasa: string;
   prahar: string;
+  rasa: string | null;
   raaga: string;
-  tempo: string;
-  frequency: string;
-  explanation: string;
+  ai: {
+    playback_mode: "SONG" | "PLAYLIST";
+    recommendations: {
+      title: string;
+      artist: string;
+      search_query?: string;
+    }[];
+    reasoning?: string;
+  };
 }
 
 export async function fetchRecommendation(
