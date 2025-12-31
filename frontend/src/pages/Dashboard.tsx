@@ -8,11 +8,14 @@ import RaagaPlayer from "@/components/RaagaPlayer";
 import PraharTimeline from "@/components/PraharTimeline";
 import Analytics from "@/components/Analytics";
 import FloatingNotes from "@/components/FloatingNotes";
+import { Button } from "@/components/ui/button";
 
 import {
   fetchRecommendation,
   RecommendResponse,
 } from "@/lib/api";
+
+import { resolveSpotifyPlaylist } from "@/lib/spotifyResolver";
 
 /* ---------------- DASHBOARD HOME ---------------- */
 
@@ -48,6 +51,8 @@ const Dashboard = () => {
   });
 
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
+
   const [recommendation, setRecommendation] =
     useState<RecommendResponse | null>(null);
 
@@ -56,33 +61,27 @@ const Dashboard = () => {
   const location = useLocation();
   const isMainDashboard = location.pathname === "/dashboard";
 
-  /* ---------- INITIAL LOAD (NO MOOD) ---------- */
+  /* ---------- INITIAL LOAD ---------- */
   useEffect(() => {
     const now = new Date();
 
-    const istTime = now.toLocaleTimeString("en-IN", {
-      timeZone: "Asia/Kolkata",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-
-    setCurrentTime(istTime);
+    setCurrentTime(
+      now.toLocaleTimeString("en-IN", {
+        timeZone: "Asia/Kolkata",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+    );
 
     const fetchInitial = async () => {
-      try {
-        const response = await fetchRecommendation({
-          mood: "", // mood optional
-          genre: "Semi-Classical",
-          language: "Hindi",
-          timestamp: now.toISOString(),
-        });
-
-        console.log("INITIAL PRAHAR →", response.prahar);
-        setRecommendation(response);
-      } catch (err) {
-        console.error("Initial recommendation failed", err);
-      }
+      const response = await fetchRecommendation({
+        mood: "",
+        genre: "",
+        language: "Hindi",
+        timestamp: now.toISOString(),
+      });
+      setRecommendation(response);
     };
 
     fetchInitial();
@@ -91,38 +90,52 @@ const Dashboard = () => {
   /* ---------- MOOD SELECT ---------- */
   const handleMoodSelect = async (data: {
     mood: string | null;
-    genres: string[];
-    languages: string[];
+    genre: string | null;
   }) => {
     setSelectedMood(data.mood);
+    setSelectedGenre(data.genre);
     setShowMoodPopup(false);
     sessionStorage.setItem("hasSeenMoodPopup", "true");
 
     const now = new Date();
 
-    const istTime = now.toLocaleTimeString("en-IN", {
-      timeZone: "Asia/Kolkata",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-
-    setCurrentTime(istTime);
+    setCurrentTime(
+      now.toLocaleTimeString("en-IN", {
+        timeZone: "Asia/Kolkata",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+    );
 
     const response = await fetchRecommendation({
       mood: data.mood ?? "",
-      genre: data.genres[0],
-      language: data.languages[0],
+      genre: data.genre ?? "",
+      language: "Hindi",
       timestamp: now.toISOString(),
     });
 
-    console.log("MOOD PRAHAR →", response.prahar);
     setRecommendation(response);
   };
 
-  const handleMoodClose = () => {
-    setShowMoodPopup(false);
-    sessionStorage.setItem("hasSeenMoodPopup", "true");
+  const handlePlaySpotify = () => {
+    if (!recommendation?.prahar) {
+      alert("Please wait while we personalize your playlist.");
+      return;
+    }
+
+    const url = resolveSpotifyPlaylist({
+      mood: selectedMood,
+      genre: selectedGenre,
+      prahar: recommendation.prahar as any,
+    });
+
+    if (!url) {
+      alert("No playlist found for this selection.");
+      return;
+    }
+
+    window.open(url, "_blank");
   };
 
   /* ---------------- RENDER ---------------- */
@@ -136,14 +149,12 @@ const Dashboard = () => {
         <TopBar />
 
         <main className="p-4 md:p-6 pb-24 md:pb-6">
-          {/* Time */}
           {currentTime && (
             <div className="mb-1 text-xs text-muted-foreground">
               Time (IST): {currentTime}
             </div>
           )}
 
-          {/* Mood */}
           {selectedMood && (
             <div className="mb-2 text-sm">
               Mood:{" "}
@@ -153,7 +164,6 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* Prahar */}
           {recommendation && (
             <div className="mb-2 text-sm">
               Prahar:{" "}
@@ -163,22 +173,28 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* Raaga Recommendation */}
           {recommendation && (
-            <div className="mb-6 glass p-4 rounded-xl border border-primary/30">
+            <div className="mb-4 glass p-4 rounded-xl border border-primary/30">
               <p className="text-sm text-muted-foreground">
                 Recommended for you
               </p>
               <p className="text-lg font-semibold text-primary">
                 Raaga {recommendation.raaga}
               </p>
-              <p className="text-sm text-muted-foreground">
-                Prahar-based recommendation
-              </p>
             </div>
           )}
 
-          {/* Main Content */}
+          {isMainDashboard && (
+            <div className="mb-6">
+              <Button
+                className="w-full md:w-auto"
+                onClick={handlePlaySpotify}
+              >
+                ▶ Play personalized playlist on Spotify
+              </Button>
+            </div>
+          )}
+
           {isMainDashboard ? (
             <DashboardHome
               currentPrahar={recommendation?.prahar ?? null}
@@ -192,7 +208,7 @@ const Dashboard = () => {
 
       <MoodPopup
         open={showMoodPopup}
-        onClose={handleMoodClose}
+        onClose={() => setShowMoodPopup(false)}
         onSelect={handleMoodSelect}
       />
     </div>

@@ -1,9 +1,11 @@
-import { Search, Play, Pause, SkipForward, User } from "lucide-react";
+import { Search, Play, Pause, SkipForward } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { UserButton, useUser } from "@clerk/clerk-react";
 
 const TopBar = () => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const { user } = useUser();
 
   return (
     <header className="glass-strong border-b border-border/30 px-4 md:px-6 py-4 flex items-center justify-between gap-4">
@@ -41,10 +43,27 @@ const TopBar = () => {
         </Button>
       </div>
 
-      {/* User Avatar */}
-      <button className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/30 to-pink-glow/30 border border-border/30 flex items-center justify-center hover:border-primary/50 transition-all">
-        <User className="w-5 h-5 text-foreground" />
-      </button>
+      {/* User Info + Avatar */}
+      <div className="flex items-center gap-3">
+        {user && (
+          <span className="hidden md:block text-sm text-muted-foreground">
+            Hi,{" "}
+            <span className="text-primary font-medium">
+              {user.firstName || user.username}
+            </span>
+          </span>
+        )}
+
+        <UserButton
+          afterSignOutUrl="/"
+          appearance={{
+            elements: {
+              avatarBox:
+                "w-10 h-10 border border-border/30 hover:border-primary/50 transition-all",
+            },
+          }}
+        />
+      </div>
     </header>
   );
 };

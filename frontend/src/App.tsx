@@ -2,7 +2,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
+import {
+  SignedIn,
+  SignedOut,
+  ClerkLoaded,
+  ClerkLoading,
+} from "@clerk/clerk-react";
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -21,20 +27,44 @@ const App = () => (
       <Toaster />
       <Sonner />
 
-      {/* ROUTES ONLY — NO BrowserRouter HERE */}
-      <Routes>
-        <Route path="/" element={<Login />} />
+      {/* ⏳ Wait for Clerk to load */}
+      <ClerkLoading>
+        <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+          Loading...
+        </div>
+      </ClerkLoading>
 
-        <Route path="/dashboard" element={<Dashboard />}>
-          <Route path="mood" element={<MoodBoardPage />} />
-          <Route path="player" element={<PlayerPage />} />
-          <Route path="timeline" element={<TimelinePage />} />
-          <Route path="analytics" element={<AnalyticsPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-        </Route>
+      <ClerkLoaded>
+        <Routes>
+          {/* PUBLIC */}
+          <Route path="/" element={<Login />} />
 
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+          {/* PROTECTED DASHBOARD */}
+          <Route
+            path="/dashboard"
+            element={
+              <>
+                <SignedIn>
+                  <Dashboard />
+                </SignedIn>
+
+                <SignedOut>
+                  <Navigate to="/" replace />
+                </SignedOut>
+              </>
+            }
+          >
+            <Route path="mood" element={<MoodBoardPage />} />
+            <Route path="player" element={<PlayerPage />} />
+            <Route path="timeline" element={<TimelinePage />} />
+            <Route path="analytics" element={<AnalyticsPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+          </Route>
+
+          {/* FALLBACK */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </ClerkLoaded>
     </TooltipProvider>
   </QueryClientProvider>
 );

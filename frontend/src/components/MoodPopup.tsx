@@ -13,8 +13,7 @@ interface MoodPopupProps {
   onClose: () => void;
   onSelect: (data: {
     mood: string | null;
-    genres: string[];
-    languages: string[];
+    genre: string | null;
   }) => void;
 }
 
@@ -28,30 +27,15 @@ const moods = [
 ];
 
 const GENRES = ["Classical", "Semi-Classical", "Bollywood", "Devotional"];
-const LANGUAGES = ["Hindi", "English", "Tamil", "Telugu", "Marathi"];
 
 const MoodPopup = ({ open, onClose, onSelect }: MoodPopupProps) => {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [selectedGenres, setSelectedGenres] = useState<string[]>(["Semi-Classical"]);
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(["Hindi"]);
-
-  const toggleItem = (
-    value: string,
-    list: string[],
-    setter: (v: string[]) => void
-  ) => {
-    setter(
-      list.includes(value)
-        ? list.filter((i) => i !== value)
-        : [...list, value]
-    );
-  };
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
 
   const handleContinue = () => {
     onSelect({
       mood: selectedMood,
-      genres: selectedGenres,
-      languages: selectedLanguages,
+      genre: selectedGenre,
     });
     onClose();
   };
@@ -71,7 +55,7 @@ const MoodPopup = ({ open, onClose, onSelect }: MoodPopupProps) => {
             Personalize your music
           </DialogTitle>
           <p className="text-muted-foreground text-sm mt-2">
-            Mood is optional — preferences help us refine
+            Mood and genre are optional — preferences help us refine
           </p>
         </DialogHeader>
 
@@ -82,7 +66,11 @@ const MoodPopup = ({ open, onClose, onSelect }: MoodPopupProps) => {
             {moods.map((mood) => (
               <button
                 key={mood.label}
-                onClick={() => setSelectedMood(mood.label)}
+                onClick={() =>
+                  setSelectedMood(
+                    selectedMood === mood.label ? null : mood.label
+                  )
+                }
                 className={`
                   p-4 rounded-2xl border transition-all duration-300
                   bg-gradient-to-br ${mood.color} ${mood.border}
@@ -97,43 +85,25 @@ const MoodPopup = ({ open, onClose, onSelect }: MoodPopupProps) => {
           </div>
         </div>
 
-        {/* GENRES */}
-        <div className="mb-4">
-          <h4 className="text-sm font-medium mb-2">Genres</h4>
+        {/* GENRE */}
+        <div className="mb-6">
+          <h4 className="text-sm font-medium mb-2">Genre (optional)</h4>
           <div className="flex flex-wrap gap-2">
             {GENRES.map((g) => (
               <button
                 key={g}
-                onClick={() => toggleItem(g, selectedGenres, setSelectedGenres)}
-                className={`px-3 py-1 rounded-full text-sm border
-                  ${selectedGenres.includes(g)
-                    ? "bg-primary/20 border-primary"
-                    : "border-border/40 text-muted-foreground"}
+                onClick={() =>
+                  setSelectedGenre(selectedGenre === g ? null : g)
+                }
+                className={`px-3 py-1 rounded-full text-sm border transition-colors
+                  ${
+                    selectedGenre === g
+                      ? "bg-primary/20 border-primary"
+                      : "border-border/40 text-muted-foreground"
+                  }
                 `}
               >
                 {g}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* LANGUAGES */}
-        <div className="mb-6">
-          <h4 className="text-sm font-medium mb-2">Languages</h4>
-          <div className="flex flex-wrap gap-2">
-            {LANGUAGES.map((l) => (
-              <button
-                key={l}
-                onClick={() =>
-                  toggleItem(l, selectedLanguages, setSelectedLanguages)
-                }
-                className={`px-3 py-1 rounded-full text-sm border
-                  ${selectedLanguages.includes(l)
-                    ? "bg-primary/20 border-primary"
-                    : "border-border/40 text-muted-foreground"}
-                `}
-              >
-                {l}
               </button>
             ))}
           </div>
