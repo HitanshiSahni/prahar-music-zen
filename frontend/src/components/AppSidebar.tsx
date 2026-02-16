@@ -18,7 +18,6 @@ const navItems = [
   { icon: Heart, label: "Mood Board", path: "/dashboard/mood" },
   { icon: Music, label: "Raaga Song Recommendations", path: "/dashboard/player" },
   { icon: Clock, label: "Prahar Timeline", path: "/dashboard/timeline" },
-  { icon: BarChart3, label: "Analytics", path: "/dashboard/analytics" },
   { icon: Settings, label: "Settings", path: "/dashboard/settings" },
 ];
 

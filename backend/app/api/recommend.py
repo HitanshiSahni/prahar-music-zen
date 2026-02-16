@@ -7,7 +7,6 @@ from app.ai.recommender import generate_music_recommendation
 
 router = APIRouter()
 
-
 @router.post("/recommend")
 def recommend(payload: RecommendRequest):
     # 1️⃣ Prahar from timestamp

@@ -5,11 +5,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.recommend import router as recommend_router
-from app.api.analytics import router as analytics_router
 
 app = FastAPI(title="Prahar Music Zen API")
 
-# ✅ CORS FIX
+# CORS FIX
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:8080"],  # frontend
@@ -19,4 +18,3 @@ app.add_middleware(
 )
 
 app.include_router(recommend_router, prefix="/api")
-app.include_router(analytics_router, prefix="/api")  

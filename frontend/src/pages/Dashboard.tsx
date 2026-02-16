@@ -6,7 +6,6 @@ import TopBar from "@/components/TopBar";
 import MoodPopup from "@/components/MoodPopup";
 import RaagaPlayer from "@/components/RaagaPlayer";
 import PraharTimeline from "@/components/PraharTimeline";
-import Analytics from "@/components/Analytics";
 import FloatingNotes from "@/components/FloatingNotes";
 import { Button } from "@/components/ui/button";
 
@@ -36,9 +35,6 @@ const DashboardHome = ({
         <PraharTimeline currentPrahar={currentPrahar} />
       </div>
 
-      <div className="lg:col-span-3">
-        <Analytics />
-      </div>
     </div>
   );
 };
