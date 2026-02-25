@@ -47,7 +47,7 @@ MAX_FILENAMES_TO_SEND = 80
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-@router.post("/recommend")
+@router.post("/local-recommend")
 async def get_recommendations(
     mood: str = Form(...),
     count: int = Form(8),

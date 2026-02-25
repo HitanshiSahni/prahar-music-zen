@@ -18,6 +18,7 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import MoodBoardPage from "./pages/MoodBoardPage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
+import PersonalizedPage from "./pages/PersonalizedPage";
 
 const queryClient = new QueryClient();
 
@@ -27,7 +28,6 @@ const App = () => (
       <Toaster />
       <Sonner />
 
-      {/* ⏳ Wait for Clerk to load */}
       <ClerkLoading>
         <div className="min-h-screen flex items-center justify-center text-muted-foreground">
           Loading...
@@ -39,7 +39,24 @@ const App = () => (
           {/* PUBLIC */}
           <Route path="/" element={<Login />} />
 
-          {/* PROTECTED DASHBOARD */}
+          {/* PERSONALIZED (WITH DASHBOARD LAYOUT) */}
+          <Route
+            path="/personalized"
+            element={
+              <>
+                <SignedIn>
+                  <Dashboard />
+                </SignedIn>
+                <SignedOut>
+                  <Navigate to="/" replace />
+                </SignedOut>
+              </>
+            }
+          >
+            <Route index element={<PersonalizedPage />} />
+          </Route>
+
+          {/* DASHBOARD */}
           <Route
             path="/dashboard"
             element={
@@ -47,7 +64,6 @@ const App = () => (
                 <SignedIn>
                   <Dashboard />
                 </SignedIn>
-
                 <SignedOut>
                   <Navigate to="/" replace />
                 </SignedOut>

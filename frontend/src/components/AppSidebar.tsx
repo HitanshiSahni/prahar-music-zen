@@ -9,12 +9,16 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
+  Sparkles,   // ✅ already imported, we’ll use this
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+
+  // ✅ NEW SEPARATE PAGE
+  { icon: Sparkles, label: "Personalized", path: "/personalized" },
+
   { icon: Heart, label: "Mood Board", path: "/dashboard/mood" },
   { icon: Music, label: "Raaga Song Recommendations", path: "/dashboard/player" },
   { icon: Clock, label: "Prahar Timeline", path: "/dashboard/timeline" },
@@ -53,7 +57,7 @@ const AppSidebar = () => {
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               const Icon = item.icon;
-              
+
               return (
                 <li key={item.path}>
                   <NavLink
@@ -66,7 +70,9 @@ const AppSidebar = () => {
                     )}
                   >
                     <Icon className="w-5 h-5 shrink-0" />
-                    {!collapsed && <span className="font-medium">{item.label}</span>}
+                    {!collapsed && (
+                      <span className="font-medium">{item.label}</span>
+                    )}
                   </NavLink>
                 </li>
               );
@@ -79,7 +85,11 @@ const AppSidebar = () => {
           onClick={() => setCollapsed(!collapsed)}
           className="m-4 p-3 rounded-xl hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
         >
-          {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+          {collapsed ? (
+            <ChevronRight className="w-5 h-5" />
+          ) : (
+            <ChevronLeft className="w-5 h-5" />
+          )}
         </button>
       </aside>
 
@@ -89,20 +99,20 @@ const AppSidebar = () => {
           {navItems.slice(0, 5).map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
-            
+
             return (
               <li key={item.path}>
                 <NavLink
                   to={item.path}
                   className={cn(
                     "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-300",
-                    isActive
-                      ? "text-primary"
-                      : "text-muted-foreground"
+                    isActive ? "text-primary" : "text-muted-foreground"
                   )}
                 >
                   <Icon className="w-5 h-5" />
-                  <span className="text-xs">{item.label.split(" ")[0]}</span>
+                  <span className="text-xs">
+                    {item.label.split(" ")[0]}
+                  </span>
                 </NavLink>
               </li>
             );

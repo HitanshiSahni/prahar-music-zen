@@ -35,7 +35,7 @@ export async function fetchRecommendation(
   formData.append("count", String(count));
   formData.append("temperature", String(temperature));
 
-  const response = await fetch(`${BACKEND_URL}/api/recommend`, {
+  const response = await fetch(`${BACKEND_URL}/api/local-recommend`, {
     method: "POST",
     body: formData,
   });

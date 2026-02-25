@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { uploadZip, fetchRecommendation, Recommendation } from "@/lib/apidirectory";
+import { uploadZip, fetchRecommendation, Recommendation } from "../lib/apidirectory";
 
 const moods = ["calm", "happy", "energetic", "sad", "angry", "anxious"];
 
