@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { uploadZip, fetchRecommendation, Recommendation } from "../lib/apidirectory";
 
-const moods = ["calm", "happy", "energetic", "sad", "angry", "anxious"];
+const moods = ["calm", "happy", "energetic", "sad"];
 
 export default function PersonalizedPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
