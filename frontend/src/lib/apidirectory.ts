@@ -4,11 +4,18 @@ export interface Recommendation {
   filename: string;
   reason: string;
   file_url: string;
+  is_local: boolean;
+}
+
+export interface RecommendationResponse {
+  success: boolean;
+  message: string;
+  is_fallback: boolean;
+  recommendations: Recommendation[];
 }
 
 export async function uploadZip(file: File) {
   const formData = new FormData();
-
   formData.append("zip_file", file);
 
   const response = await fetch(`${BACKEND_URL}/api/upload-zip`, {
@@ -18,7 +25,6 @@ export async function uploadZip(file: File) {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    
     throw new Error(errorData.detail?.[0]?.msg || errorData.detail || "Zip upload failed");
   }
 
@@ -27,13 +33,11 @@ export async function uploadZip(file: File) {
 
 export async function fetchRecommendation(
   mood: string,
-  count: number = 8,
-  temperature: number = 0.4
-) {
+  count: number = 8
+): Promise<RecommendationResponse> {
   const formData = new FormData();
   formData.append("mood", mood);
   formData.append("count", String(count));
-  formData.append("temperature", String(temperature));
 
   const response = await fetch(`${BACKEND_URL}/api/local-recommend`, {
     method: "POST",
