@@ -31,7 +31,7 @@ MUSIC_FOLDER.mkdir(exist_ok=True)
 SYSTEM_PROMPT = """You are a music mood expert that recommends songs based purely on filenames.
 
 Input:
-- mood: one of "calm", "happy", "energetic", "sad", "angry", "anxious"
+- mood: one of "calm", "happy", "energetic", "sad"
 - requested_count: integer
 - filenames: list of song filenames
 
