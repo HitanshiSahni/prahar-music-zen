@@ -1,5 +1,4 @@
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
-from fastapi.responses import JSONResponse
 import os
 from pathlib import Path
 import json
@@ -9,9 +8,9 @@ from urllib.parse import quote
 import zipfile
 import shutil
 import uuid
-import re
-import random
 import logging
+import librosa
+import numpy as np
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -28,7 +27,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 MUSIC_FOLDER = BASE_DIR / "songs"
 MUSIC_FOLDER.mkdir(exist_ok=True)
 
-SYSTEM_PROMPT = """You are a music mood expert that recommends songs based purely on filenames.
+DATA_FOLDER = BASE_DIR / "data"
+DATA_FOLDER.mkdir(exist_ok=True)
+JSON_FILE = DATA_FOLDER / "vibe_data.json"
 
 Input:
 - mood: one of "calm", "happy", "energetic", "sad"
@@ -47,60 +48,72 @@ MAX_FILENAMES_TO_SEND = 80
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-@router.post("/local-recommend")
-async def get_recommendations(
-    mood: str = Form(...),
-    count: int = Form(8),
-    temperature: float = Form(DEFAULT_TEMPERATURE)
-):
-    if not mood:
-        raise HTTPException(status_code=400, detail="Mood is required")
+def load_vibe_data():
+    if JSON_FILE.exists():
+        with open(JSON_FILE, "r") as f:
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return []
+    return []
 
-    requested_count = max(1, min(30, count))
-    audio_files = list(MUSIC_FOLDER.glob("*.mp3"))
-    
-    if not audio_files:
-        raise HTTPException(status_code=400, detail="No songs in library yet.")
+def save_vibe_data(data):
+    with open(JSON_FILE, "w") as f:
+        json.dump(data, f, indent=4)
 
-    filenames = [p.name for p in audio_files]
-    if len(filenames) > MAX_FILENAMES_TO_SEND:
-        filenames = random.sample(filenames, MAX_FILENAMES_TO_SEND)
-
-    filenames_text = "\n".join(f"- {name}" for name in filenames)
-    user_prompt = f"mood: {mood}\nrequested_count: {requested_count}\nFilenames:\n{filenames_text}"
-
+def analyze_with_librosa(file_path: Path, filename: str):
+    """
+    Analyzes physical audio properties and returns layman-friendly reasons.
+    """
     try:
-        model = genai.GenerativeModel(
-            model_name=MODEL_NAME,
-            generation_config={
-                "temperature": temperature,
-                "response_mime_type": "application/json"
-            },
-            system_instruction=SYSTEM_PROMPT
-        )
+        y, sr = librosa.load(str(file_path), sr=22050, duration=30, offset=15.0)
 
-        response = model.generate_content(user_prompt)
-        raw = response.text.strip()
-        raw = re.sub(r'^\s*```json?\s*|\s*```$', '', raw, flags=re.IGNORECASE | re.MULTILINE).strip()
+        tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
+        bpm = float(tempo[0]) if isinstance(tempo, np.ndarray) else float(tempo)
 
-        parsed = json.loads(raw)
-        recommendations = parsed.get("recommendations", [])
+        rms = librosa.feature.rms(y=y)
+        mean_rms = float(np.mean(rms))
 
-        for rec in recommendations:
-            if "filename" in rec:
-                rec["file_url"] = f"/songs/{quote(rec['filename'])}"
+        spec_cent = librosa.feature.spectral_centroid(y=y, sr=sr)
+        mean_spec_cent = float(np.mean(spec_cent))
+
+        mood = "calm"
+        intensity = 0.5
+        reason = ""
+
+        # Layman interpretable reasons
+        if bpm > 115 and mean_rms > 0.12:
+            mood = "energetic"
+            intensity = min(1.0, mean_rms * 4.0)
+            reason = "A fast-paced, powerful track with a lot of driving energy to get you moving."
+        elif bpm > 100 and mean_spec_cent > 1600:
+            mood = "happy"
+            intensity = min(1.0, mean_spec_cent / 4000.0)
+            reason = "An upbeat and lively song with a bright, cheerful sound."
+        elif bpm < 100 and mean_rms < 0.1:
+            mood = "calm"
+            intensity = max(0.0, 1.0 - (mean_rms * 5.0))
+            reason = "A gentle, relaxing track with a soft and soothing rhythm."
+        else:
+            mood = "sad"
+            intensity = max(0.0, 1.0 - (bpm / 160.0))
+            reason = "A slower, moody song with a deep and emotional atmosphere."
 
         return {
-            "success": True,
+            "song_name": filename,
             "mood": mood,
-            "recommendations": recommendations
+            "mood_intensity": round(max(0.0, min(1.0, intensity)), 2),
+            "reason": reason
         }
 
     except Exception as e:
-        logger.error(f"Gemini error: {str(e)}")
-        fallback = [{"filename": f.name, "reason": "AI unavailable - random selection", "file_url": f"/songs/{quote(f.name)}"} 
-                    for f in audio_files[:requested_count]]
-        return {"success": False, "recommendations": fallback}
+        logger.error(f"Librosa analysis failed for {filename}: {e}")
+        return {
+            "song_name": filename,
+            "mood": "calm",
+            "mood_intensity": 0.1,
+            "reason": "A quiet, low-key track."
+        }
 
 @router.post("/upload-zip")
 async def upload_zip(zip_file: UploadFile = File(...)): 
@@ -108,12 +121,13 @@ async def upload_zip(zip_file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="File must be .zip")
 
     temp_zip = MUSIC_FOLDER / f"temp_{uuid.uuid4().hex[:10]}.zip"
-
+    existing_data = load_vibe_data()
+    
     try:
         with temp_zip.open("wb") as buffer:
             shutil.copyfileobj(zip_file.file, buffer)
 
-        added = []
+        analyzed_songs = []
         with zipfile.ZipFile(temp_zip, 'r') as zf:
             for member in zf.namelist():
                 if member.lower().endswith(".mp3"):
@@ -122,12 +136,20 @@ async def upload_zip(zip_file: UploadFile = File(...)):
 
                     zf.extract(member, MUSIC_FOLDER)
                     extracted_file = MUSIC_FOLDER / member
+                    
                     if extracted_file.exists():
                         if extracted_file != target:
                             shutil.move(str(extracted_file), str(target))
-                        added.append(clean_name)
+                        
+                        logger.info(f"Running Librosa analysis on: {clean_name}")
+                        song_data = analyze_with_librosa(target, clean_name)
+                        
+                        existing_data = [d for d in existing_data if d["song_name"] != clean_name]
+                        existing_data.append(song_data)
+                        analyzed_songs.append(clean_name)
 
-        return {"success": True, "added": added}
+        save_vibe_data(existing_data)
+        return {"success": True, "added": analyzed_songs}
 
     except Exception as e:
         logger.error(f"Zip processing failed: {str(e)}")
@@ -136,15 +158,75 @@ async def upload_zip(zip_file: UploadFile = File(...)):
         if temp_zip.exists():
             temp_zip.unlink()
 
-@router.post("/upload-song")
-async def upload_song(song: UploadFile = File(...)):
-    if not song.filename.lower().endswith(".mp3"):
-        raise HTTPException(status_code=400, detail="Only .mp3 allowed")
+@router.post("/local-recommend")
+async def get_recommendations(
+    mood: str = Form(...),
+    count: int = Form(8)
+):
+    valid_moods = ["calm", "happy", "energetic", "sad"]
+    if mood not in valid_moods:
+        raise HTTPException(status_code=400, detail=f"Mood must be one of {valid_moods}")
 
-    filename = secure_filename(song.filename)
-    destination = MUSIC_FOLDER / filename
-    
-    with destination.open("wb") as buffer:
-        shutil.copyfileobj(song.file, buffer)
+    requested_count = max(1, min(30, count))
+    library = load_vibe_data()
 
-    return {"success": True, "filename": filename, "file_url": f"/songs/{quote(filename)}"}
+    matches = [song for song in library if song["mood"] == mood]
+    matches.sort(key=lambda x: x["mood_intensity"], reverse=True)
+
+    formatted_matches = []
+    for match in matches[:requested_count]:
+        formatted_matches.append({
+            "filename": match["song_name"],
+            "reason": match['reason'],
+            "file_url": f"/songs/{quote(match['song_name'])}",
+            "is_local": True
+        })
+
+    # Return local matches if found
+    if formatted_matches:
+        return {
+            "success": True,
+            "message": "",
+            "is_fallback": False,
+            "recommendations": formatted_matches
+        }
+
+    # Fallback to AI if no local songs found
+    prompt = f"""
+    The user is looking for '{mood}' songs, but their local library doesn't have any.
+    Recommend {requested_count} popular, real-world songs that perfectly fit the '{mood}' vibe.
+    Return ONLY JSON:
+    {{"recommendations": [{{"filename": "Song Name - Artist", "reason": "Why it fits..."}}]}}
+    """
+    try:
+        model = genai.GenerativeModel(
+            model_name=MODEL_NAME, 
+            generation_config={"response_mime_type": "application/json"}
+        )
+        response = model.generate_content(prompt)
+        ai_data = json.loads(response.text.strip())
+        
+        fallback_recs = []
+        for rec in ai_data.get("recommendations", []):
+            fallback_recs.append({
+                "filename": rec.get("filename"),
+                "reason": rec.get("reason"),
+                "file_url": "", 
+                "is_local": False
+            })
+
+        return {
+            "success": True,
+            "message": "songs not found according to the mood",
+            "is_fallback": True,
+            "recommendations": fallback_recs
+        }
+    except Exception as e:
+        logger.error(f"Fallback generation failed: {e}")
+        # Even if AI fails, we MUST tell the frontend that local songs weren't found
+        return {
+            "success": False, 
+            "message": "songs not found according to the mood", 
+            "is_fallback": True, 
+            "recommendations": []
+        }
