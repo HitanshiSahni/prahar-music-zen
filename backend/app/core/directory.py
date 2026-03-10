@@ -31,7 +31,19 @@ DATA_FOLDER = BASE_DIR / "data"
 DATA_FOLDER.mkdir(exist_ok=True)
 JSON_FILE = DATA_FOLDER / "vibe_data.json"
 
-MODEL_NAME = "gemini-1.5-flash"
+Input:
+- mood: one of "calm", "happy", "energetic", "sad"
+- requested_count: integer
+- filenames: list of song filenames
+
+Rules:
+- Return ONLY clean JSON
+- Return EXACTLY requested_count songs
+- Format: {"mood": "...", "recommendations": [{"filename": "...", "reason": "..."}]}"""
+
+MODEL_NAME = "gemini-2.5-flash"
+DEFAULT_TEMPERATURE = 0.4
+MAX_FILENAMES_TO_SEND = 80
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
